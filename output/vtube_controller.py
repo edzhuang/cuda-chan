@@ -280,12 +280,16 @@ class VTubeStudioController:
             # Try hotkey first
             success = await self.trigger_hotkey(expression.hotkey_name)
 
-            # If hotkey failed, fall back to parameters
-            if not success:
-                log.debug(f"Hotkey '{expression.hotkey_name}' not found, using parameters instead")
+            # If hotkey failed, try parameters as fallback
+            if not success and expression.parameter_changes:
+                log.debug(f"Hotkey '{expression.hotkey_name}' not found, trying parameters")
                 use_hotkeys = False
+            elif not success:
+                # No hotkey and no parameters - just log and continue
+                log.debug(f"Emotion '{emotion}' has no hotkey or parameters configured, skipping")
+                success = True  # Don't treat as failure
 
-        if not use_hotkeys:
+        if not use_hotkeys and expression.parameter_changes:
             # Set parameters directly
             for param_name, value in expression.parameter_changes.items():
                 param_success = await self.set_parameter(param_name, value * expression.intensity)

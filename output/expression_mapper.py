@@ -32,87 +32,53 @@ class ExpressionMapper:
     """Maps CUDA-chan's emotions to VTube Studio expressions."""
 
     # Default mapping of emotions to VTube Studio controls
+    # NOTE: Parameters are disabled by default since they require tracking parameters
+    # Expressions will rely on hotkeys (which auto-fallback if not configured)
     DEFAULT_MAPPINGS = {
         Emotion.NEUTRAL: ExpressionConfig(
             hotkey_name="Neutral",
-            parameter_changes={
-                "MouthSmile": 0.0,
-                "MouthOpen": 0.0,
-                "EyesWide": 0.0,
-            },
+            parameter_changes={},  # Empty - rely on hotkey or do nothing
             intensity=1.0
         ),
         Emotion.HAPPY: ExpressionConfig(
             hotkey_name="Happy",
-            parameter_changes={
-                "MouthSmile": 0.8,
-                "MouthOpen": 0.3,
-                "EyesWide": 0.2,
-            },
+            parameter_changes={},
             intensity=1.0
         ),
         Emotion.SAD: ExpressionConfig(
             hotkey_name="Sad",
-            parameter_changes={
-                "MouthSmile": -0.5,
-                "MouthOpen": 0.1,
-                "EyesWide": -0.2,
-            },
+            parameter_changes={},
             intensity=1.0
         ),
         Emotion.EXCITED: ExpressionConfig(
             hotkey_name="Excited",
-            parameter_changes={
-                "MouthSmile": 1.0,
-                "MouthOpen": 0.5,
-                "EyesWide": 0.8,
-            },
+            parameter_changes={},
             intensity=1.0
         ),
         Emotion.FOCUSED: ExpressionConfig(
             hotkey_name="Focused",
-            parameter_changes={
-                "MouthSmile": 0.0,
-                "MouthOpen": 0.0,
-                "EyesWide": -0.3,
-            },
+            parameter_changes={},
             intensity=0.8
         ),
         Emotion.SURPRISED: ExpressionConfig(
             hotkey_name="Surprised",
-            parameter_changes={
-                "MouthSmile": 0.0,
-                "MouthOpen": 0.8,
-                "EyesWide": 1.0,
-            },
+            parameter_changes={},
             intensity=1.0,
             duration=2.0  # Brief surprise
         ),
         Emotion.THINKING: ExpressionConfig(
             hotkey_name="Thinking",
-            parameter_changes={
-                "MouthSmile": 0.2,
-                "MouthOpen": 0.0,
-                "EyesWide": -0.1,
-            },
+            parameter_changes={},
             intensity=0.7
         ),
         Emotion.CONFUSED: ExpressionConfig(
             hotkey_name="Confused",
-            parameter_changes={
-                "MouthSmile": 0.0,
-                "MouthOpen": 0.2,
-                "EyesWide": 0.3,
-            },
+            parameter_changes={},
             intensity=0.8
         ),
         Emotion.ANGRY: ExpressionConfig(
             hotkey_name="Angry",
-            parameter_changes={
-                "MouthSmile": -0.7,
-                "MouthOpen": 0.3,
-                "EyesWide": -0.5,
-            },
+            parameter_changes={},
             intensity=1.0
         ),
     }
