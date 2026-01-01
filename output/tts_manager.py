@@ -1,7 +1,6 @@
 """Text-to-Speech manager using ElevenLabs API."""
 
 import asyncio
-import hashlib
 from pathlib import Path
 from typing import Optional
 import pygame
@@ -29,9 +28,9 @@ class TTSManager:
             use_speaker_boost=settings.personality.voice_settings.use_speaker_boost
         )
 
-        # Cache setup
-        self.cache_dir = settings.get_cache_dir() / "tts"
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        # Temp directory for playback
+        self.temp_dir = settings.get_cache_dir() / "tts_temp"
+        self.temp_dir.mkdir(parents=True, exist_ok=True)
 
         # Audio playback
         pygame.mixer.init()
@@ -40,33 +39,16 @@ class TTSManager:
 
         # Statistics
         self.total_characters_generated = 0
-        self.cache_hits = 0
-        self.cache_misses = 0
 
         log.info(f"TTS manager initialized (voice_id={self.voice_id[:20]}...)")
 
-    def _get_cache_path(self, text: str) -> Path:
-        """
-        Get cache file path for text.
-
-        Args:
-            text: Text to speak
-
-        Returns:
-            Path to cache file
-        """
-        # Create hash of text + voice settings for unique identification
-        cache_key = f"{text}_{self.voice_id}_{self.voice_settings.stability}"
-        hash_value = hashlib.md5(cache_key.encode()).hexdigest()
-        return self.cache_dir / f"{hash_value}.mp3"
-
-    async def generate_speech(self, text: str, use_cache: bool = True) -> Optional[bytes]:
+    async def generate_speech(self, text: str, use_cache: bool = False) -> Optional[bytes]:
         """
         Generate speech audio from text.
 
         Args:
             text: Text to speak
-            use_cache: Whether to use cache
+            use_cache: Whether to use cache (disabled by default)
 
         Returns:
             Audio data as bytes or None if failed
@@ -75,16 +57,7 @@ class TTSManager:
             log.warning("Empty text provided for TTS")
             return None
 
-        # Check cache first
-        cache_path = self._get_cache_path(text)
-        if use_cache and cache_path.exists():
-            self.cache_hits += 1
-            log.debug(f"TTS cache hit for: {text[:30]}...")
-            with open(cache_path, "rb") as f:
-                return f.read()
-
-        # Generate new audio
-        self.cache_misses += 1
+        # Caching disabled - always generate fresh audio
         try:
             log.debug(f"Generating TTS for: {text[:50]}...")
 
@@ -104,12 +77,6 @@ class TTSManager:
 
             # Update statistics
             self.total_characters_generated += len(text)
-
-            # Cache the audio
-            if use_cache:
-                with open(cache_path, "wb") as f:
-                    f.write(audio_data)
-                log.debug(f"Cached TTS audio: {cache_path.name}")
 
             return audio_data
 
@@ -172,7 +139,7 @@ class TTSManager:
                 text = audio_item["text"]
 
                 # Save to temp file for pygame
-                temp_path = self.cache_dir / "temp_playback.mp3"
+                temp_path = self.temp_dir / "temp_playback.mp3"
                 with open(temp_path, "wb") as f:
                     f.write(audio_data)
 
@@ -254,14 +221,8 @@ class TTSManager:
 
     def get_statistics(self) -> dict:
         """Get TTS usage statistics."""
-        total_requests = self.cache_hits + self.cache_misses
-        cache_hit_rate = (self.cache_hits / total_requests * 100) if total_requests > 0 else 0
-
         return {
             "total_characters_generated": self.total_characters_generated,
-            "cache_hits": self.cache_hits,
-            "cache_misses": self.cache_misses,
-            "cache_hit_rate": f"{cache_hit_rate:.1f}%",
             "is_speaking": self.is_speaking,
             "queue_size": self.audio_queue.qsize()
         }
