@@ -24,9 +24,15 @@ pytchat>=0.5.0
 websockets>=12.0
 pyvts>=0.3.0
 
-# Audio
+# Audio (Output)
 pygame>=2.5.0
 pydub>=0.25.1
+
+# Audio (Input - Microphone & Speech-to-Text)
+sounddevice>=0.4.6
+openai-whisper>=20231117
+torch>=2.0.0  # Required for Whisper
+torchaudio>=2.0.0  # Required for Whisper
 
 # Data & Storage
 aiosqlite>=0.19.0

@@ -264,7 +264,7 @@ class VTubeStudioController:
 
         Args:
             emotion: Emotion name
-            use_hotkeys: If True, use hotkeys; if False, use parameters directly
+            use_hotkeys: If True, try hotkeys first then fallback to parameters
 
         Returns:
             True if successful
@@ -277,9 +277,15 @@ class VTubeStudioController:
         success = True
 
         if use_hotkeys:
-            # Trigger hotkey for this expression
+            # Try hotkey first
             success = await self.trigger_hotkey(expression.hotkey_name)
-        else:
+
+            # If hotkey failed, fall back to parameters
+            if not success:
+                log.debug(f"Hotkey '{expression.hotkey_name}' not found, using parameters instead")
+                use_hotkeys = False
+
+        if not use_hotkeys:
             # Set parameters directly
             for param_name, value in expression.parameter_changes.items():
                 param_success = await self.set_parameter(param_name, value * expression.intensity)

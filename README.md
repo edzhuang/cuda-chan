@@ -1,20 +1,57 @@
 # CUDA-chan 🤖✨
 
-A fully autonomous AI VTuber system powered by Claude AI that can stream, chat with viewers, play games, and maintain a consistent personality.
+An AI sidekick for streamers - provides live commentary, reactions, and chat engagement while you game!
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## 🎬 Quick Start
+## 🎬 What is CUDA-chan?
+
+CUDA-chan is your **AI streaming companion** - think of her as your co-host who:
+- **Listens** to you via microphone and responds naturally
+- **Watches** your gameplay and provides commentary
+- **Engages** with your chat actively
+- **Reacts** to exciting moments with you
+- **Supports** you with encouragement and banter
+
+**You** play the game. **You** run the stream. CUDA-chan makes it more fun!
+
+## ✨ Features
+
+- **🎤 Voice Interaction** - Listens to you via microphone (Whisper speech-to-text)
+- **🎭 Live2D Avatar** - Animated expressions via VTube Studio
+- **🗣️ Natural Voice** - Responds with ElevenLabs text-to-speech
+- **👀 Screen Awareness** - Watches your gameplay for context
+- **💬 Chat Engagement** - Monitors and responds to YouTube chat
+- **🧠 AI Personality** - Powered by Claude Sonnet 4.5
+- **😊 Expressive Reactions** - Changes emotions based on context
+- **🛡️ Safe & Supportive** - Never backseats, always encourages
+
+## 📋 Requirements
+
+### Software
+- Python 3.10+
+- [VTube Studio](https://denchisoft.com) (free)
+- Microphone for streamer input
+
+### API Keys
+- [Anthropic API](https://console.anthropic.com) (~$2-4/hour)
+- [ElevenLabs](https://elevenlabs.io) (free tier: ~10k chars/month)
+
+## 🚀 Quick Start
 
 ```bash
 # Clone and setup
-git clone <your-repo-url>
+git clone https://github.com/edzhuang/cuda-chan.git
 cd cuda-chan
 ./scripts/setup.sh
 
-# Configure (add your API keys)
-nano .env
+# Configure API keys
+cp .env.example .env
+nano .env  # Add your API keys
+
+# Install audio dependencies
+pip install sounddevice openai-whisper torch
 
 # Run
 python main.py
@@ -22,209 +59,180 @@ python main.py
 
 See [SETUP_GUIDE.md](SETUP_GUIDE.md) for detailed instructions.
 
-## ✨ Features
+## 🎮 How It Works
 
-- **🎭 Live2D Avatar** - Full VTube Studio integration with emotion control
-- **🗣️ Natural Voice** - ElevenLabs text-to-speech with caching
-- **👀 Computer Vision** - Screen capture and OCR for game awareness
-- **💬 Live Chat** - YouTube chat monitoring and natural responses
-- **🎮 Game Playing** - Autonomous gameplay with keyboard/mouse control
-- **🧠 AI Decision Making** - Claude-powered personality and responses
-- **😊 Personality System** - Consistent character with customizable traits
-- **🛡️ Safety Features** - Multiple failsafes and input validation
-
-## 📋 Requirements
-
-### Software
-- Python 3.10+
-- [VTube Studio](https://denchisoft.com) (free)
-- Tesseract OCR
-
-### API Keys
-- [Anthropic API](https://console.anthropic.com) (~$3-5/hour)
-- [ElevenLabs](https://elevenlabs.io) (~$0.30/hour)
-- YouTube API (optional)
-
-## 🚀 Installation
-
-### Quick Setup (Recommended)
-
-```bash
-./scripts/setup.sh
+```
+┌─────────────────────────────────────────────────────┐
+│              YOU (The Streamer)                     │
+│         Playing game + Talking                      │
+└──────────┬──────────────┬───────────────────────────┘
+           │              │
+    ┌──────▼────┐  ┌──────▼────────┐
+    │ Microphone│  │  Game Screen  │
+    └──────┬────┘  └──────┬────────┘
+           │              │
+           │      ┌───────▼─────────┐
+           │      │ Screen Capture  │
+           │      └───────┬─────────┘
+           │              │
+    ┌──────▼──────────────▼────────┐
+    │      CUDA-chan (AI Sidekick) │
+    │  • Listens to you            │
+    │  • Watches the game          │
+    │  • Reads chat                │
+    │  • Reacts & comments         │
+    └──────┬───────────────────────┘
+           │
+    ┌──────▼────────┐
+    │  VTube Studio │
+    │  (Live2D)     │
+    └───────────────┘
 ```
 
-### Manual Setup
+## 🎙️ Usage
 
-1. Create virtual environment:
-```bash
-python3 -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-```
+### Basic Streaming Setup
 
-2. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
+1. **Start VTube Studio** with your Live2D model
+2. **Run CUDA-chan**: `python main.py`
+3. **Start streaming** - CUDA-chan will appear as your sidekick!
+4. **Talk naturally** - She'll respond to you
+5. **Play your game** - She'll react and comment
 
-3. Configure environment:
-```bash
-cp .env.example .env
-# Edit .env with your API keys
-```
+### Interaction Examples
 
-4. Run:
-```bash
-python main.py
-```
+**You**: "Alright chat, let's try this boss again!"
+**CUDA-chan**: "You've got this! Third time's the charm, right?"
 
-See [SETUP_GUIDE.md](SETUP_GUIDE.md) for complete instructions.
+**Chat**: "@CUDA-chan what do you think of this strategy?"
+**CUDA-chan**: "Ooh, interesting! I think it could work if we're careful with the timing!"
 
-## 📖 Documentation
+**[Exciting moment happens]**
+**CUDA-chan**: "OH! That was so close! Did you see that?!"
 
-- **[Setup Guide](SETUP_GUIDE.md)** - Complete setup instructions
-- **[Implementation Plan](.claude/plans/)** - System architecture and design
+### Tips for Best Experience
 
-## 🎮 Usage
-
-### Running CUDA-chan
-
-1. Start VTube Studio with your model
-2. Run: `python main.py`
-3. CUDA-chan will connect and greet viewers
-
-### Streaming Setup
-
-1. Configure OBS to capture VTube Studio
-2. Start YouTube live stream
-3. Add video ID to `.env`
-4. Restart CUDA-chan
-
-### Chat Interaction
-
-CUDA-chan automatically:
-- Responds when mentioned
-- Answers questions
-- Reacts to game suggestions
-- Maintains natural conversation
+- **Talk to CUDA-chan** - She responds best when you engage with her
+- **Let her breathe** - She won't talk over you, give her space to respond
+- **Involve chat** - She loves engaging with your viewers
+- **Natural flow** - Treat her like a friend who's watching with you
 
 ## ⚙️ Configuration
 
-### Personality
+### Personality Customization
 
-Edit [config/personality.yaml](config/personality.yaml):
+Edit [config/personality.yaml](config/personality.yaml) to customize CUDA-chan's:
+- Personality traits
+- Speaking style
+- Catchphrases
+- Response patterns
 
-```yaml
-name: "CUDA-chan"
-personality_traits:
-  - energetic
-  - friendly
-  - competitive
-speaking_style:
-  - casual language
-  - gaming terminology
-```
-
-### Environment Variables
-
-Key settings in `.env`:
+### Key Settings (.env)
 
 ```bash
 # AI & Voice
 ANTHROPIC_API_KEY=sk-ant-...
 ELEVENLABS_API_KEY=...
-ELEVENLABS_VOICE_ID=...
+ELEVENLABS_VOICE_ID=...  # Pre-made voice recommended
+
+# VTube Studio
+VTUBE_STUDIO_HOST=localhost
+VTUBE_STUDIO_PORT=8001
+VTUBE_STUDIO_TOKEN=...  # Obtained on first run
 
 # Performance
-TICK_RATE=1.0              # Decision frequency (seconds)
+TICK_RATE=1.0              # How often AI makes decisions
 CLAUDE_MAX_RPM=50          # API rate limit
-MAX_ACTIONS_PER_SECOND=10  # Input safety limit
 
-# YouTube (optional)
-YOUTUBE_VIDEO_ID=...
+# Audio Input (Optional - for advanced users)
+AUDIO_DEVICE_INDEX=0       # Microphone device
+WHISPER_MODEL_SIZE=base    # tiny, base, small, medium, large
 ```
 
 ## 📊 Cost Tracking
 
-Estimate costs:
-```bash
-python scripts/cost_tracker.py
-```
+Typical costs per hour of streaming:
 
-Typical costs per hour:
-- Conservative (6 decisions/min): ~$2.50/hr
-- Moderate (10 decisions/min): ~$4.00/hr
-- Active (15 decisions/min): ~$6.00/hr
+| Activity Level | Claude API | ElevenLabs | Total/Hour |
+|---------------|-----------|------------|------------|
+| Light (calm stream) | ~$1.50 | ~$0.20 | ~$1.70 |
+| Moderate | ~$2.50 | ~$0.40 | ~$2.90 |
+| Active (lots of talk) | ~$4.00 | ~$0.60 | ~$4.60 |
+
+**Free Tier Limits**:
+- ElevenLabs: 10,000 chars/month (~5-10 min of speech)
+- Consider upgrading for regular streaming
 
 ## 🏗️ Project Structure
 
 ```
 cuda-chan/
-├── config/          # Configuration and personality
-├── core/            # Main orchestrator and state management
+├── input/           # NEW: Audio monitoring & speech-to-text
+├── config/          # Personality & prompts (UPDATED for sidekick mode)
+├── core/            # Orchestrator & event management
 ├── ai/              # Claude AI integration
-├── vision/          # Screen capture and analysis
-├── control/         # Input control with safety
+├── vision/          # Screen watching (observation only)
 ├── output/          # VTube Studio + TTS
 ├── chat/            # YouTube chat integration
-├── games/           # Game controllers
-├── utils/           # Utilities and logging
+├── control/         # DEPRECATED: No longer controls games
+├── games/           # DEPRECATED: No longer plays games
+├── utils/           # Logging and utilities
 └── main.py          # Entry point
 ```
 
-## 🔒 Safety Features
-
-- **Action Validation** - Blocks dangerous commands
-- **Rate Limiting** - Prevents API abuse
-- **Failsafe Mode** - Emergency stop (move mouse to corner)
-- **Input Whitelist** - Only safe keys allowed
-- **Audit Logging** - All actions logged
-
 ## 🎯 Roadmap
 
-### ✅ MVP (Current)
-- Basic chat interaction
-- VTube Studio control
-- Simple game support
-- TTS with caching
+### ✅ Current (Sidekick MVP)
+- Microphone input & speech-to-text
+- Natural conversation with streamer
+- Screen observation & commentary
+- Chat engagement
+- Expressive avatar reactions
 
 ### 🚧 Phase 2 (Planned)
-- [ ] Minecraft via Mineflayer
-- [ ] OSU gameplay
-- [ ] Advanced CV with game state
-- [ ] Long-term memory
-- [ ] Multi-game sessions
+- [ ] Better voice activity detection
+- [ ] Conversation context memory
+- [ ] Custom voice training support
+- [ ] Multi-language support
+- [ ] OBS integration for scene detection
+- [ ] Twitch chat support
 
 ### 💡 Phase 3 (Future)
-- [ ] Learning from gameplay
-- [ ] Viewer preferences
-- [ ] Multi-stream support
-- [ ] Personality evolution
+- [ ] Multiple AI personality modes
+- [ ] Learning from stream analytics
+- [ ] Community clip reactions
+- [ ] Collaboration features for duo streams
 
 ## 🐛 Troubleshooting
+
+### No Microphone Input
+- Check microphone permissions
+- Run `python -m input.audio_monitor` to list devices
+- Set correct `AUDIO_DEVICE_INDEX` in `.env`
+
+### Whisper Loading Slow
+- First load downloads model (~1GB for base)
+- Use smaller model: `WHISPER_MODEL_SIZE=tiny`
+- Models cached after first download
+
+### CUDA-chan Talks Too Much
+- Increase `TICK_RATE` in `.env` (slower decisions)
+- Adjust personality in `config/personality.yaml`
 
 ### VTube Studio Won't Connect
 - Check VTube Studio is running
 - Enable Plugin API in settings
 - Verify token in `.env`
 
-### No Voice Output
-- Check ElevenLabs API key and voice ID
-- Verify audio output device
-- Check character quota
-
-### High Costs
-- Increase `TICK_RATE` to reduce decisions
-- Lower `CLAUDE_MAX_RPM`
-- Monitor with `scripts/cost_tracker.py`
-
-See [SETUP_GUIDE.md](SETUP_GUIDE.md#part-8-troubleshooting) for more.
+See [SETUP_GUIDE.md](SETUP_GUIDE.md#troubleshooting) for more help.
 
 ## 🤝 Contributing
 
-Contributions welcome! Please:
-1. Fork the repository
-2. Create a feature branch
-3. Submit a pull request
+Contributions welcome! This is a new direction for the project. Ideas needed for:
+- Better voice activity detection
+- Improved context awareness
+- Multi-platform chat support
+- Performance optimizations
 
 ## 📝 License
 
@@ -235,16 +243,17 @@ MIT License - see [LICENSE](LICENSE) for details
 - **AI**: Powered by [Anthropic Claude](https://anthropic.com)
 - **Voice**: [ElevenLabs](https://elevenlabs.io)
 - **Avatar**: [VTube Studio](https://denchisoft.com)
+- **Speech-to-Text**: [OpenAI Whisper](https://github.com/openai/whisper)
 - **Inspiration**: Neuro-sama and the VTuber community
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/your-repo/issues)
+- **Issues**: [GitHub Issues](https://github.com/edzhuang/cuda-chan/issues)
 - **Documentation**: [Setup Guide](SETUP_GUIDE.md)
 - **Logs**: Check `data/logs/` for debugging
 
 ---
 
-**Made with ❤️ by the community**
+**Made with ❤️ for streamers who want an AI friend**
 
-*Note: This is an MVP. Features are being added iteratively.*
+*CUDA-chan: Your supportive streaming sidekick!*

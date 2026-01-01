@@ -35,7 +35,11 @@ class PersonalityConfig(BaseModel):
     catchphrases: dict
     emotional_states: dict
     voice_settings: VoiceSettings
-    gaming: dict
+    # Sidekick mode fields (optional for backward compatibility)
+    sidekick_behavior: Optional[dict] = None
+    interaction_examples: Optional[dict] = None
+    # Legacy fields (optional for backward compatibility)
+    gaming: Optional[dict] = None
     chat_interaction: dict
     stream_behavior: dict
     content_guidelines: dict

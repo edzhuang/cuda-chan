@@ -216,15 +216,17 @@ class EventQueue:
 # Event type constants for consistency
 class EventType:
     """Standard event types."""
+    # Streamer input (HIGHEST PRIORITY)
+    STREAMER_SPEECH = "streamer_speech"
+
     # Chat events
     CHAT_MESSAGE = "chat_message"
     CHAT_COMMAND = "chat_command"
+    CHAT_MENTION = "chat_mention"
 
-    # Game events
+    # Game events (observations, not actions)
+    GAME_EVENT = "game_event"
     GAME_STATE_CHANGE = "game_state_change"
-    GAME_ACTION_COMPLETE = "game_action_complete"
-    GAME_START = "game_start"
-    GAME_END = "game_end"
 
     # System events
     SYSTEM_ERROR = "system_error"
@@ -235,9 +237,9 @@ class EventType:
     TTS_COMPLETE = "tts_complete"
     EXPRESSION_CHANGE = "expression_change"
 
-    # Autonomous behavior
-    IDLE_ACTION = "idle_action"
-    AUTONOMOUS_DECISION = "autonomous_decision"
+    # Sidekick behavior
+    IDLE_COMMENTARY = "idle_commentary"
+    REACTION_OPPORTUNITY = "reaction_opportunity"
 
 
 if __name__ == "__main__":
