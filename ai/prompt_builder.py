@@ -6,7 +6,8 @@ from config.prompts import (
     build_decision_prompt,
     build_idle_prompt,
     build_chat_response_prompt,
-    build_game_action_prompt
+    build_game_event_prompt,  # Renamed for sidekick mode
+    build_streamer_question_prompt  # New for sidekick mode
 )
 from utils.logger import log
 
@@ -38,17 +39,18 @@ class PromptBuilder:
         user_prompt = build_decision_prompt(context, self.personality_config)
         return self.system_prompt, user_prompt
 
-    def build_idle_prompt(self, recent_chat: List[Dict]) -> tuple[str, str]:
+    def build_idle_prompt(self, recent_chat: List[Dict], time_silent: float = 0.0) -> tuple[str, str]:
         """
         Build prompt for idle behavior.
 
         Args:
             recent_chat: Recent chat messages
+            time_silent: Time since last speech in seconds
 
         Returns:
             Tuple of (system_prompt, user_prompt)
         """
-        user_prompt = build_idle_prompt(self.personality_config, recent_chat)
+        user_prompt = build_idle_prompt(self.personality_config, recent_chat, time_silent)
         return self.system_prompt, user_prompt
 
     def build_chat_response_prompt(
@@ -69,17 +71,30 @@ class PromptBuilder:
         user_prompt = build_chat_response_prompt(message, self.personality_config, context)
         return self.system_prompt, user_prompt
 
-    def build_game_action_prompt(self, game_state: Dict[str, Any]) -> tuple[str, str]:
+    def build_game_event_prompt(self, event_description: str) -> tuple[str, str]:
         """
-        Build prompt for game-specific decision making.
+        Build prompt for reacting to game events (sidekick mode).
 
         Args:
-            game_state: Current game state
+            event_description: Description of what happened in the game
 
         Returns:
             Tuple of (system_prompt, user_prompt)
         """
-        user_prompt = build_game_action_prompt(game_state, self.personality_config)
+        user_prompt = build_game_event_prompt(event_description, self.personality_config)
+        return self.system_prompt, user_prompt
+
+    def build_streamer_question_prompt(self, question: str) -> tuple[str, str]:
+        """
+        Build prompt for responding to streamer questions (sidekick mode).
+
+        Args:
+            question: Question from the streamer
+
+        Returns:
+            Tuple of (system_prompt, user_prompt)
+        """
+        user_prompt = build_streamer_question_prompt(question, self.personality_config)
         return self.system_prompt, user_prompt
 
     def build_compact_context(self, context: Dict[str, Any]) -> str:
