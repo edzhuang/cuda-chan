@@ -126,20 +126,27 @@ class Settings:
     def validate(self) -> tuple[bool, list[str]]:
         """Validate that all required settings are present."""
         errors = []
+        warnings = []
 
-        # Check API keys
+        # Check API keys (required)
         if not self.api.anthropic_api_key:
             errors.append("ANTHROPIC_API_KEY is not set")
         if not self.api.elevenlabs_api_key:
             errors.append("ELEVENLABS_API_KEY is not set")
 
-        # Check VTube Studio
+        # Check VTube Studio (optional - obtained on first run)
         if not self.vtube_studio.token:
-            errors.append("VTUBE_STUDIO_TOKEN is not set (can be obtained after first connection)")
+            warnings.append("VTUBE_STUDIO_TOKEN not set - will be obtained on first connection")
 
-        # Check voice ID
-        if not self.personality.voice_settings.voice_id:
+        # Check voice ID (required)
+        if not self.personality.voice_settings.voice_id or self.personality.voice_settings.voice_id == "your-voice-id-here":
             errors.append("ELEVENLABS_VOICE_ID is not set")
+
+        # Print warnings
+        if warnings:
+            print("\n⚠️  Warnings:")
+            for warning in warnings:
+                print(f"   - {warning}")
 
         return len(errors) == 0, errors
 

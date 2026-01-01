@@ -89,10 +89,11 @@ class TTSManager:
             log.debug(f"Generating TTS for: {text[:50]}...")
 
             # Call ElevenLabs API
-            audio_generator = await self.client.text_to_speech.convert(
+            # Using eleven_turbo_v2_5 - free tier compatible model
+            audio_generator = self.client.text_to_speech.convert(
                 voice_id=self.voice_id,
                 text=text,
-                model_id="eleven_monolingual_v1",
+                model_id="eleven_turbo_v2_5",
                 voice_settings=self.voice_settings
             )
 

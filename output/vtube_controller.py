@@ -28,6 +28,7 @@ class VTubeStudioController:
         self.current_emotion = "neutral"
 
         self._message_id = 0
+        self._ws_lock = asyncio.Lock()  # Prevent concurrent WebSocket operations
 
         log.info(f"VTube Studio controller initialized (ws://{self.host}:{self.port})")
 
@@ -96,31 +97,33 @@ class VTubeStudioController:
             log.error("Not connected to VTube Studio")
             return None
 
-        try:
-            # Add authentication token to request
-            if self.token:
-                request["data"]["authenticationToken"] = self.token
+        async with self._ws_lock:  # Serialize WebSocket operations
+            try:
+                # Add authentication token to request
+                if self.token:
+                    request["data"]["authenticationToken"] = self.token
 
-            # Send request
-            await self.ws.send(json.dumps(request))
+                # Send request
+                await self.ws.send(json.dumps(request))
 
-            # Receive response
-            response_text = await self.ws.recv()
-            response = json.loads(response_text)
+                # Receive response
+                response_text = await self.ws.recv()
+                response = json.loads(response_text)
 
-            if response.get("messageType") == "APIError":
-                log.error(f"VTube Studio API error: {response.get('data', {}).get('message', 'Unknown error')}")
+                if response.get("messageType") == "APIError":
+                    log.error(f"VTube Studio API error: {response.get('data', {}).get('message', 'Unknown error')}")
+                    return None
+
+                return response
+
+            except (ConnectionClosed, WebSocketException) as e:
+                log.error(f"WebSocket error: {e}")
+                self.is_connected = False
+                self.authenticated = False
                 return None
-
-            return response
-
-        except (ConnectionClosed, WebSocketException) as e:
-            log.error(f"WebSocket error: {e}")
-            self.is_connected = False
-            return None
-        except Exception as e:
-            log.error(f"Request failed: {e}")
-            return None
+            except Exception as e:
+                log.error(f"Request failed: {e}")
+                return None
 
     async def _authenticate(self) -> bool:
         """Authenticate with existing token."""
@@ -160,20 +163,25 @@ class VTubeStudioController:
         if not self.ws:
             return False
 
-        try:
-            await self.ws.send(json.dumps(request))
-            response_text = await self.ws.recv()
-            response = json.loads(response_text)
+        async with self._ws_lock:  # Serialize WebSocket operations
+            try:
+                await self.ws.send(json.dumps(request))
+                response_text = await self.ws.recv()
+                response = json.loads(response_text)
 
-            if response.get("data", {}).get("authenticationToken"):
-                new_token = response["data"]["authenticationToken"]
-                log.success(f"Received authentication token: {new_token[:20]}...")
-                log.info("Add this token to your .env file as VTUBE_STUDIO_TOKEN")
-                self.token = new_token
-                return True
+                if response.get("data", {}).get("authenticationToken"):
+                    new_token = response["data"]["authenticationToken"]
+                    log.success(f"Received authentication token: {new_token[:20]}...")
+                    print(f"\n{'='*60}")
+                    print(f"VTUBE STUDIO AUTHENTICATION TOKEN:")
+                    print(f"{new_token}")
+                    print(f"{'='*60}\n")
+                    log.info("Add this token to your .env file as VTUBE_STUDIO_TOKEN")
+                    self.token = new_token
+                    return True
 
-        except Exception as e:
-            log.error(f"Token request failed: {e}")
+            except Exception as e:
+                log.error(f"Token request failed: {e}")
 
         return False
 
