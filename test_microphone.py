@@ -18,9 +18,9 @@ async def test_microphone():
     AudioMonitor.list_devices()
     print()
 
-    # Test with current threshold
-    threshold = 0.015
-    print(f"Testing with threshold={threshold}")
+    # Test with current threshold (lowered for iPhone Continuity Mic)
+    threshold = 0.003
+    print(f"Testing with threshold={threshold} (optimized for low-gain devices)")
     print("Speak into your microphone for 10 seconds...")
     print("Watch for 'SPEECH DETECTED!' messages\n")
 

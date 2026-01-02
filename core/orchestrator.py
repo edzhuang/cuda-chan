@@ -42,8 +42,8 @@ class Orchestrator:
         self.chat_monitor: Optional[YouTubeChatMonitor] = None
         self.chat_parser = ChatParser()
         self.screen_capture = ScreenCapture()
-        # Lower threshold for better speech detection (default 0.02 -> 0.015)
-        self.audio_monitor = AudioMonitor(threshold=0.015)
+        # Very low threshold for iPhone Continuity Mic and other low-gain devices
+        self.audio_monitor = AudioMonitor(threshold=0.003)
         self.voice_input = StreamerVoiceInput()
 
         # Control system
