@@ -52,7 +52,6 @@ class Orchestrator:
         # Control flags
         self.running = False
         self.tick_rate = settings.system.tick_rate
-        self.streamer_is_speaking = False  # Track if streamer is currently speaking
 
         # Background tasks
         self.tasks = []
@@ -213,14 +212,8 @@ class Orchestrator:
         try:
             log.debug(f"Processing streamer speech: {len(audio_data)} samples")
 
-            # Mark streamer as speaking to prevent AI interruption
-            self.streamer_is_speaking = True
-
-            # Transcribe audio
+            # Transcribe audio (no need to set streamer_is_speaking flag)
             text = await self.voice_input.stt.transcribe(audio_data)
-
-            # Mark streamer as done speaking
-            self.streamer_is_speaking = False
 
             if text and text.strip():
                 log.info(f"Streamer said: {text}")
@@ -237,7 +230,6 @@ class Orchestrator:
 
         except Exception as e:
             log.error(f"Error processing streamer speech: {e}")
-            self.streamer_is_speaking = False
 
     async def _handle_streamer_speech(self, speech_data: dict):
         """
@@ -306,11 +298,6 @@ class Orchestrator:
 
     async def _execute_speak(self, text: str):
         """Execute speech action."""
-        # CRITICAL: Don't speak while streamer is speaking
-        if self.streamer_is_speaking:
-            log.debug("Skipping speech - streamer is speaking")
-            return
-
         log.info(f"Speaking: {text[:50]}...")
 
         # Update state
@@ -326,13 +313,9 @@ class Orchestrator:
         if self.vtube.authenticated:
             asyncio.create_task(self.vtube.animate_speaking(duration, intensity=0.6))
 
-        # Wait for speech to finish, but abort if streamer starts speaking
+        # Wait for speech to finish
+        # Note: We don't stop if streamer starts speaking - natural overlapping conversation
         while self.tts.is_speaking:
-            if self.streamer_is_speaking:
-                # Streamer started speaking - stop AI speech immediately
-                await self.tts.stop_speaking()
-                log.info("Stopped speaking - streamer started talking")
-                break
             await asyncio.sleep(0.1)
 
         self.state_manager.is_speaking = False
@@ -372,10 +355,10 @@ class Orchestrator:
 
     async def _idle_behavior(self):
         """Behavior when idle (no events)."""
-        # Rarely make an autonomous decision (reduced from 10% to 2%)
-        # In sidekick mode, we should mostly wait for streamer input
+        # Occasionally make an autonomous decision for commentary
+        # In sidekick mode, should comment on game, chat, etc.
         import random
-        if random.random() < 0.02:  # 2% chance per tick
+        if random.random() < 0.15:  # 15% chance per tick for more engagement
             log.debug("Idle behavior triggered")
             recent_chat = self.state_manager.chat_context.get_recent_messages(5)
             decision = await self.brain.idle_behavior(recent_chat)
