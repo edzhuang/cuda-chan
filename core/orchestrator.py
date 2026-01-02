@@ -209,25 +209,34 @@ class Orchestrator:
         Args:
             audio_data: Audio data from microphone
         """
-        # Mark streamer as speaking to prevent AI interruption
-        self.streamer_is_speaking = True
+        try:
+            log.debug(f"Processing streamer speech: {len(audio_data)} samples")
 
-        # Transcribe audio
-        text = await self.voice_input.stt.transcribe(audio_data)
+            # Mark streamer as speaking to prevent AI interruption
+            self.streamer_is_speaking = True
 
-        # Mark streamer as done speaking
-        self.streamer_is_speaking = False
+            # Transcribe audio
+            text = await self.voice_input.stt.transcribe(audio_data)
 
-        if text and text.strip():
-            log.info(f"Streamer said: {text}")
+            # Mark streamer as done speaking
+            self.streamer_is_speaking = False
 
-            # Queue streamer speech event with CRITICAL priority
-            await self.event_queue.put(
-                EventType.STREAMER_SPEECH,
-                {"text": text, "audio_length": len(audio_data)},
-                Priority.CRITICAL,
-                "streamer_microphone"
-            )
+            if text and text.strip():
+                log.info(f"Streamer said: {text}")
+
+                # Queue streamer speech event with CRITICAL priority
+                await self.event_queue.put(
+                    EventType.STREAMER_SPEECH,
+                    {"text": text, "audio_length": len(audio_data)},
+                    Priority.CRITICAL,
+                    "streamer_microphone"
+                )
+            else:
+                log.debug("No text transcribed from audio")
+
+        except Exception as e:
+            log.error(f"Error processing streamer speech: {e}")
+            self.streamer_is_speaking = False
 
     async def _handle_streamer_speech(self, speech_data: dict):
         """

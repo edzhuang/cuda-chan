@@ -78,10 +78,15 @@ class VTubeStudioController:
     async def disconnect(self):
         """Disconnect from VTube Studio."""
         if self.ws:
-            await self.ws.close()
-            self.is_connected = False
-            self.authenticated = False
-            log.info("Disconnected from VTube Studio")
+            try:
+                await self.ws.close()
+            except Exception as e:
+                log.debug(f"WebSocket close error (expected during shutdown): {e}")
+            finally:
+                self.is_connected = False
+                self.authenticated = False
+                self.ws = None
+                log.info("Disconnected from VTube Studio")
 
     async def _send_request(self, request: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """
@@ -228,8 +233,8 @@ class VTubeStudioController:
         Returns:
             True if successful
         """
-        if not self.authenticated:
-            log.error("Not authenticated with VTube Studio")
+        if not self.authenticated or not self.is_connected:
+            log.debug("Cannot set parameter - not authenticated or not connected")
             return False
 
         # Clamp value to valid range
