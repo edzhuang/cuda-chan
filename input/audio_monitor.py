@@ -79,14 +79,14 @@ class AudioMonitor:
 
             if not self.is_speaking and self.speech_frames >= self.min_speech_frames:
                 self.is_speaking = True
-                log.debug("Speech detected - started")
+                log.info("Speech detected - started")
         else:
             self.silence_frames += 1
             self.speech_frames = 0
 
             if self.is_speaking and self.silence_frames >= self.max_silence_frames:
                 self.is_speaking = False
-                log.debug("Speech detected - ended")
+                log.info("Speech detected - ended, transcribing...")
 
                 # Trigger speech callback with buffered audio
                 if self.speech_callback:

@@ -42,7 +42,8 @@ class Orchestrator:
         self.chat_monitor: Optional[YouTubeChatMonitor] = None
         self.chat_parser = ChatParser()
         self.screen_capture = ScreenCapture()
-        self.audio_monitor = AudioMonitor()
+        # Lower threshold for better speech detection (default 0.02 -> 0.015)
+        self.audio_monitor = AudioMonitor(threshold=0.015)
         self.voice_input = StreamerVoiceInput()
 
         # Control system
@@ -371,9 +372,11 @@ class Orchestrator:
 
     async def _idle_behavior(self):
         """Behavior when idle (no events)."""
-        # Occasionally make an autonomous decision
+        # Rarely make an autonomous decision (reduced from 10% to 2%)
+        # In sidekick mode, we should mostly wait for streamer input
         import random
-        if random.random() < 0.1:  # 10% chance per tick
+        if random.random() < 0.02:  # 2% chance per tick
+            log.debug("Idle behavior triggered")
             recent_chat = self.state_manager.chat_context.get_recent_messages(5)
             decision = await self.brain.idle_behavior(recent_chat)
             if decision:
