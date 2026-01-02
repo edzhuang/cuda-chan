@@ -222,6 +222,38 @@ class ClaudeBrain:
             log.error(f"Chat response failed: {e}")
             return None
 
+    async def respond_to_streamer(self, text: str) -> Optional[ParsedResponse]:
+        """
+        Respond to streamer speech (HIGHEST PRIORITY).
+
+        Args:
+            text: What the streamer said
+
+        Returns:
+            Parsed response or None
+        """
+        try:
+            system_prompt, user_prompt = self.prompt_builder.build_streamer_question_prompt(text)
+
+            response_text = await self._call_claude(
+                system_prompt,
+                user_prompt,
+                max_tokens=300,
+                temperature=1.0
+            )
+
+            parsed = self.response_parser.parse(response_text)
+
+            if self.response_parser.validate_action(parsed):
+                log.info(f"Streamer response: {parsed.content[:50]}...")
+                return parsed
+
+            return None
+
+        except Exception as e:
+            log.error(f"Streamer response failed: {e}")
+            return None
+
     async def decide_game_action(self, game_state: Dict[str, Any]) -> Optional[ParsedResponse]:
         """
         Decide on a game action.

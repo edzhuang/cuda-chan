@@ -1,105 +1,85 @@
 # How to Talk with CUDA-chan
 
-## Current Status: Audio Input Not Yet Integrated ⚠️
+## Microphone Input Now Active! ✅
 
-**Important**: The microphone input system has been created but is **not yet integrated** into the orchestrator. Right now, CUDA-chan can only:
+The microphone input system is **fully integrated** into the orchestrator. CUDA-chan can now:
+- ✅ Listen to your microphone
 - ✅ Read YouTube chat
 - ✅ Watch your screen
 - ✅ Speak via TTS
 - ✅ Show emotions
-- ❌ Listen to your microphone (not connected yet)
+- ✅ Respond to you as a sidekick!
 
-## What Works Now
+## How It Works
 
-### 1. Chat Interaction
-Type in YouTube live chat and CUDA-chan will respond!
+### 1. Voice Input (Primary Mode)
+**Just speak naturally** - No special commands needed!
+
+1. **Start CUDA-chan** - The microphone will activate automatically
+2. **Speak** - CUDA-chan listens via Whisper transcription
+3. **She responds** - Via TTS with her voice and emotions
+
+**Important Behavior:**
+- CUDA-chan will **NOT speak while you're speaking** - she's polite!
+- If she's speaking and you start talking, she'll **stop immediately** to listen
+- Your voice input has **CRITICAL priority** (highest in the system)
+
+### 2. Chat Interaction
+You can also type in YouTube live chat for backup communication.
 
 **Example:**
 ```
 You (in chat): @CUDA-chan how are you?
-CUDA-chan: I'm doing great! Ready to hang out with everyone!
+CUDA-chan: I'm doing great! Ready to help with the stream!
 ```
 
-### 2. Screen Observation
+### 3. Screen Observation
 CUDA-chan watches what's on screen and can comment on it (vision system active).
 
-## How to Enable Microphone (Future - Needs Integration)
+## Setup Requirements
 
-Once the orchestrator is updated (see `core/orchestrator.py`), you'll be able to:
-
-1. **Just speak naturally** - No special commands needed
-2. **CUDA-chan listens** - Whisper transcribes your voice
-3. **She responds** - Via TTS with her voice
-
-### Setup Steps (When Integrated):
+### Install Audio Dependencies
 
 ```bash
-# 1. Install audio dependencies
-pip install sounddevice openai-whisper torch
+# Install required packages
+pip install sounddevice openai-whisper torch torchaudio
+```
 
-# 2. Test your microphone
-python -m input.audio_monitor
+### Configure Microphone (Optional)
 
-# 3. Configure device (optional)
-# Edit .env and add:
+If you have multiple microphones, you can specify which one to use:
+
+```bash
+# List available audio devices
+python -c "from input.audio_monitor import AudioMonitor; AudioMonitor.list_devices()"
+```
+
+Then add to your `.env`:
+```bash
 AUDIO_DEVICE_INDEX=0  # Your microphone device number
 WHISPER_MODEL_SIZE=base  # tiny, base, small, medium, large
-
-# 4. Run CUDA-chan
-python main.py
 ```
 
-## Integration TODO
+**Model Size Recommendations:**
+- `tiny` - Fastest, least accurate (~1GB RAM)
+- `base` - **Recommended** - Good balance (~1GB RAM)
+- `small` - Better accuracy (~2GB RAM)
+- `medium` - High accuracy (~5GB RAM)
+- `large` - Best accuracy (~10GB RAM)
 
-The orchestrator needs these updates in `core/orchestrator.py`:
-
-```python
-# In __init__:
-from input.audio_monitor import AudioMonitor
-from input.speech_to_text import StreamerVoiceInput
-
-self.audio_monitor = AudioMonitor()
-self.voice_input = StreamerVoiceInput()
-
-# In initialize():
-await self.voice_input.initialize()
-self.audio_monitor.set_speech_callback(self._on_streamer_speech)
-await self.audio_monitor.start()
-
-# New method:
-async def _on_streamer_speech(self, audio_data):
-    text = await self.voice_input.stt.transcribe(audio_data)
-    if text:
-        await self.event_queue.put(
-            EventType.STREAMER_SPEECH,
-            {"text": text},
-            Priority.CRITICAL,
-            "streamer_microphone"
-        )
-```
-
-## Temporary Workaround: Use Chat
-
-Until microphone is integrated, you can simulate talking by using YouTube chat:
-- Type your messages in chat
-- Mention @CUDA-chan to get her attention
-- She'll respond as if you talked to her!
-
-## Testing Microphone Components
-
-Test the audio system components individually:
+## Testing Your Microphone
 
 ```bash
 # Test microphone detection
 python -c "from input.audio_monitor import AudioMonitor; AudioMonitor.list_devices()"
 
-# Test speech-to-text (requires setup)
+# Test speech-to-text
 python -c "
 from input.speech_to_text import SpeechToText
 import asyncio
 
 async def test():
-    stt = SpeechToText(model_size='tiny')
+    stt = SpeechToText(model_size='base')
     await stt.load_model()
     print('Whisper loaded successfully!')
 
@@ -107,23 +87,100 @@ asyncio.run(test())
 "
 ```
 
-## Current Limitations
+## How CUDA-chan Listens
 
-Without orchestrator integration:
-- ❌ Can't hear your voice via microphone
-- ❌ Can't respond to spoken commands
-- ❌ Won't react to streamer speech events
-- ✅ All other features work (chat, vision, TTS, avatar)
+### Voice Activity Detection (VAD)
+- Automatically detects when you start speaking
+- Buffers 3 seconds of audio
+- Transcribes when you stop speaking
+- No manual activation needed!
 
-## When Will This Work?
+### Speech Priority System
+1. **CRITICAL** - Your voice (streamer microphone)
+2. **HIGH** - Chat mentions (@CUDA-chan)
+3. **MEDIUM** - General chat messages
+4. **LOW** - Idle commentary
 
-The microphone integration requires updating the orchestrator. This is on the TODO list but hasn't been implemented yet to avoid breaking existing functionality.
+### Polite AI Behavior
+- Won't interrupt you while speaking
+- Stops mid-sentence if you start talking
+- Waits for natural pauses to respond
+- Focuses on being a supportive sidekick
 
-You can either:
-1. **Wait** for orchestrator integration
-2. **Use chat** as temporary substitute
-3. **Integrate yourself** using the code examples above
+## Running CUDA-chan
+
+```bash
+# Just run normally - microphone activates automatically
+python main.py
+```
+
+You should see:
+```
+[INFO] Initializing streamer voice input...
+[SUCCESS] Whisper base model loaded
+[SUCCESS] Audio monitor started - listening for streamer voice
+[SUCCESS] Microphone input active - CUDA-chan can now hear you!
+```
+
+## Troubleshooting
+
+### "Failed to initialize microphone"
+**Solution:**
+1. Check that your microphone is connected and working
+2. Verify permissions (macOS/Linux may need microphone access)
+3. Try specifying device index in `.env`
+4. Check if another app is using the microphone
+
+### "Whisper not available"
+**Solution:**
+```bash
+pip install openai-whisper torch torchaudio
+```
+
+### Speech not detected
+**Solution:**
+1. Check your microphone volume/gain
+2. Try lowering the threshold in `AudioMonitor` (default: 0.02)
+3. Speak louder or move closer to microphone
+4. Check device selection with `list_devices()`
+
+### AI speaks over me
+**Solution:**
+- This shouldn't happen! The system is designed to detect your speech and stop
+- If it does, please report as a bug - there may be VAD tuning needed
+- Try adjusting `threshold` in audio_monitor.py
+
+## Features
+
+### Real-Time Transcription
+- Uses OpenAI Whisper (local, no API calls)
+- Runs on CPU or GPU (auto-detects)
+- English by default (configurable for other languages)
+- Fast turnaround with `base` model
+
+### Smart Interruption Handling
+- Detects when streamer starts speaking
+- Immediately stops AI speech
+- Clears audio queue to listen
+- Resumes naturally after streamer finishes
+
+### Context-Aware Responses
+- Remembers recent conversation
+- Knows what's on screen (vision)
+- Sees chat messages
+- Responds as supportive sidekick
+
+## Example Interactions
+
+**You:** "Hey CUDA-chan, how's it going?"
+**CUDA-chan:** "Hey! I'm doing great, excited to be here with you! What are we playing today?"
+
+**You:** "What do you think about this game?"
+**CUDA-chan:** "Ooh, this looks interesting! The graphics are really nice. Are you going for a speedrun or just exploring?"
+
+**You:** "Should I go left or right here?"
+**CUDA-chan:** "Hmm, I'd say right - I think I saw something shiny over there! But it's your call, I'm just along for the ride!"
 
 ---
 
-**For now, communicate with CUDA-chan via YouTube chat!** 💬
+**Ready to stream with your AI sidekick!** 🎮🤖

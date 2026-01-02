@@ -15,6 +15,8 @@ from chat.youtube_monitor import YouTubeChatMonitor
 from chat.chat_parser import ChatParser
 from vision.screen_capture import ScreenCapture
 from control.input_controller import InputController
+from input.audio_monitor import AudioMonitor
+from input.speech_to_text import StreamerVoiceInput
 from utils.logger import log
 
 
@@ -40,6 +42,8 @@ class Orchestrator:
         self.chat_monitor: Optional[YouTubeChatMonitor] = None
         self.chat_parser = ChatParser()
         self.screen_capture = ScreenCapture()
+        self.audio_monitor = AudioMonitor()
+        self.voice_input = StreamerVoiceInput()
 
         # Control system
         self.input_controller = InputController()
@@ -47,6 +51,7 @@ class Orchestrator:
         # Control flags
         self.running = False
         self.tick_rate = settings.system.tick_rate
+        self.streamer_is_speaking = False  # Track if streamer is currently speaking
 
         # Background tasks
         self.tasks = []
@@ -88,6 +93,17 @@ class Orchestrator:
                     log.warning("Chat monitor failed to start, continuing without it")
             else:
                 log.warning("No YouTube video ID configured, skipping chat monitor")
+
+            # Initialize microphone input (CRITICAL for sidekick mode)
+            log.info("Initializing streamer voice input...")
+            try:
+                await self.voice_input.initialize()
+                self.audio_monitor.set_speech_callback(self._on_streamer_speech)
+                await self.audio_monitor.start()
+                log.success("Microphone input active - CUDA-chan can now hear you!")
+            except Exception as e:
+                log.error(f"Failed to initialize microphone: {e}")
+                log.warning("Continuing without microphone input")
 
             # Set initial state
             self.state_manager.update_system_state(SystemState.IDLE)
@@ -144,7 +160,10 @@ class Orchestrator:
         log.debug(f"Processing event: {event.event_type}")
 
         try:
-            if event.event_type == EventType.CHAT_MESSAGE:
+            if event.event_type == EventType.STREAMER_SPEECH:
+                await self._handle_streamer_speech(event.data)
+
+            elif event.event_type == EventType.CHAT_MESSAGE:
                 await self._handle_chat_event(event.data)
 
             elif event.event_type == EventType.GAME_STATE_CHANGE:
@@ -182,6 +201,53 @@ class Orchestrator:
             priority=parsed["priority"],
             source="youtube_chat"
         )
+
+    async def _on_streamer_speech(self, audio_data):
+        """
+        Callback when streamer speech is detected.
+
+        Args:
+            audio_data: Audio data from microphone
+        """
+        # Mark streamer as speaking to prevent AI interruption
+        self.streamer_is_speaking = True
+
+        # Transcribe audio
+        text = await self.voice_input.stt.transcribe(audio_data)
+
+        # Mark streamer as done speaking
+        self.streamer_is_speaking = False
+
+        if text and text.strip():
+            log.info(f"Streamer said: {text}")
+
+            # Queue streamer speech event with CRITICAL priority
+            await self.event_queue.put(
+                EventType.STREAMER_SPEECH,
+                {"text": text, "audio_length": len(audio_data)},
+                Priority.CRITICAL,
+                "streamer_microphone"
+            )
+
+    async def _handle_streamer_speech(self, speech_data: dict):
+        """
+        Handle streamer speech event (HIGHEST PRIORITY).
+
+        Args:
+            speech_data: Dictionary with 'text' and other metadata
+        """
+        text = speech_data.get("text", "")
+
+        if not text or not text.strip():
+            return
+
+        log.info(f"Responding to streamer: {text[:50]}...")
+
+        # Get AI response using streamer question prompt
+        response = await self.brain.respond_to_streamer(text)
+
+        if response:
+            await self._execute_ai_action(response)
 
     async def _handle_chat_event(self, parsed_message: dict):
         """Handle chat message event."""
@@ -230,6 +296,11 @@ class Orchestrator:
 
     async def _execute_speak(self, text: str):
         """Execute speech action."""
+        # CRITICAL: Don't speak while streamer is speaking
+        if self.streamer_is_speaking:
+            log.debug("Skipping speech - streamer is speaking")
+            return
+
         log.info(f"Speaking: {text[:50]}...")
 
         # Update state
@@ -245,8 +316,13 @@ class Orchestrator:
         if self.vtube.authenticated:
             asyncio.create_task(self.vtube.animate_speaking(duration, intensity=0.6))
 
-        # Wait for speech to finish
+        # Wait for speech to finish, but abort if streamer starts speaking
         while self.tts.is_speaking:
+            if self.streamer_is_speaking:
+                # Streamer started speaking - stop AI speech immediately
+                await self.tts.stop_speaking()
+                log.info("Stopped speaking - streamer started talking")
+                break
             await asyncio.sleep(0.1)
 
         self.state_manager.is_speaking = False
@@ -318,6 +394,10 @@ class Orchestrator:
         # Send farewell
         farewell = settings.personality.catchphrases.get("farewell", ["Goodbye!"])[0]
         await self._execute_speak(f"{farewell} See you next time!")
+
+        # Stop audio monitor
+        if self.audio_monitor.is_monitoring:
+            await self.audio_monitor.stop()
 
         # Stop chat monitor
         if self.chat_monitor:
